@@ -85,6 +85,23 @@ GET    /api/sync/kv           GET /api/sync/peers
 POST   /api/sync/now          run a gossip round now
 ```
 
+## Building an app on the mesh
+
+`src/adverts.ts` — advertisements over the signed KV: `publishAdvert` /
+`retractAdvert` / `listAdverts` / `findAdvert`. One stable key per advert
+(`<namespace>:<nodeId>:<advertId>`), republished on a timer so rotation and
+expiry propagate without restarts. Used for invites, beacons, share offers.
+
+`src/node.ts` — `resetNode(store)`: factory reset — new identity, empty
+KV/peers/blobs/log. `createIdentity(dataDir)` in `src/identity.ts` mints a
+fresh identity without touching anything else.
+
+`docs/app-sync-patterns.md` — the application sync model proven in Abba:
+single-writer vs per-writer vs immutable key schemas, retractions as values
+(never key deletes), seen-tracking apply loops, pairing tables for scoped
+records, and the gossip-tick shape. Read this before designing your record
+layout.
+
 ## Trust model
 
 - The **invite code is the trust root** (bearer credential). It binds a tunnel
@@ -104,5 +121,5 @@ POST   /api/sync/now          run a gossip round now
 ## Tests
 
 ```bash
-bun test   # 31 tests: identity, store, live two-node gossip over HTTP
+bun test   # 39 tests: identity, store, adverts, node reset, live two-node gossip over HTTP
 ```

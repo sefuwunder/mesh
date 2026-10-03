@@ -3,7 +3,7 @@ import { describe, test, expect } from "bun:test";
 import { mkdtempSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
-import { loadOrCreateIdentity, signData, verifyData, peerIdFor } from "../src/identity";
+import { loadOrCreateIdentity, createIdentity, signData, verifyData, peerIdFor } from "../src/identity";
 
 const freshDir = () => mkdtempSync(join(tmpdir(), "mesh-id-"));
 
@@ -16,6 +16,17 @@ describe("identity", () => {
     expect(a.id).toHaveLength(32);
     expect(a.id).toBe(peerIdFor(a.publicKey));
     expect(a.publicKey).toBe(b.publicKey);
+  });
+
+  test("createIdentity always mints fresh (factory reset)", () => {
+    const dir = freshDir();
+    const a = loadOrCreateIdentity(dir);
+    const b = createIdentity(dir);
+    expect(b.id).not.toBe(a.id);
+    expect(b.id).toHaveLength(32);
+    expect(b.id).toBe(peerIdFor(b.publicKey));
+    // persisted: loadOrCreateIdentity now returns the new one
+    expect(loadOrCreateIdentity(dir).id).toBe(b.id);
   });
 
   test("sign / verify round-trip", () => {
